@@ -3,9 +3,14 @@ package io.github.mayunfei.simple_download;
 import android.content.Context;
 import android.os.Environment;
 import android.text.TextUtils;
+import io.github.mayunfei.simple_download.db.DownloadDao;
+import io.github.mayunfei.simple_download.entity.Task;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.net.SocketException;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okhttp3.ResponseBody;
 import okio.BufferedSink;
@@ -17,6 +22,7 @@ import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
+import rx.subjects.PublishSubject;
 
 /**
  * Created by mayunfei on 17-3-21.
@@ -26,6 +32,8 @@ public class RxDownLoad {
   private static final long DOWNLOAD_CHUNK_SIZE = 1024;
   private DownloadApi mDownloadApi;
   private Retrofit mRetrofit;
+  private DownloadDao mDao;
+  private final PublishSubject<Set<String>> triggers = PublishSubject.create();
 
   private static RxDownLoad instance;
 
@@ -36,8 +44,9 @@ public class RxDownLoad {
     return instance;
   }
 
-  public void init(Retrofit retrofit) {
+  public void init(Context context,Retrofit retrofit) {
     mDownloadApi = retrofit.create(DownloadApi.class);
+    mDao = new DownloadDao(context);
   }
 
   public Observable<Integer> download(final String url) {
@@ -65,10 +74,7 @@ public class RxDownLoad {
                       fileName = getFileName(url);
                     }
 
-                    File fileDir = new File(filePath);
-                    if (!fileDir.exists()) {
-                      fileDir.mkdirs();
-                    }
+                    checkPath(path);
 
                     File file = new File(filePath, fileName);
                     sink = Okio.buffer(Okio.sink(file));
@@ -95,6 +101,39 @@ public class RxDownLoad {
         })
         .debounce(1000, TimeUnit.MICROSECONDS)
         .subscribeOn(AndroidSchedulers.mainThread());
+  }
+
+  public void download2(final String url, final String path, final String name) {
+    String filePath = path;
+    String fileName = name;
+    if (TextUtils.isEmpty(path)) {
+      filePath = getDefPath();
+    }
+    if (TextUtils.isEmpty(name)) {
+      fileName = getFileName(url);
+    }
+    checkPath(path);
+    Task task = mDao.getTaskByUrl(url);
+    File downloadFile = new File(filePath, fileName);
+    RandomAccessFile tempFile = null;
+
+    try {
+      tempFile =
+          new RandomAccessFile(downloadFile,"rwd");
+
+      Task task = Task.newBuilder().url(url).path(downloadFile.getAbsolutePath()).build();
+
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+
+  }
+
+  private void checkPath(String path) {
+    File fileDir = new File(path);
+    if (!fileDir.exists()) {
+      fileDir.mkdirs();
+    }
   }
 
   private String getDefPath() {

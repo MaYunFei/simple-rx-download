@@ -35,4 +35,5 @@ dependencies {
   compile rootProject.ext.adapter_rxjava
   compile rootProject.ext.okhttp
   compile rootProject.ext.timber
+  compile rootProject.ext.sqlbrite
 }
