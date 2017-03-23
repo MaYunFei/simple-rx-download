@@ -1,5 +1,6 @@
 package io.github.mayunfei.rxdownload.entity;
 
+import io.github.mayunfei.rxdownload.function.DownloadApi;
 import io.reactivex.processors.FlowableProcessor;
 import java.util.concurrent.Semaphore;
 
@@ -16,6 +17,8 @@ public abstract class DownloadTask {
   FlowableProcessor<DownloadEvent> processor;
   private boolean canceled = false;
   private boolean completed = false;
+  protected DownloadApi downloadApi;
+
 
   public boolean isCanceled() {
     return canceled;
