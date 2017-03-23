@@ -6,17 +6,27 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import io.github.mayunfei.rxdownload.entity.DownloadStatus;
 import io.github.mayunfei.rxdownload.function.DownloadService;
+import io.github.mayunfei.rxdownload.function.IOUtils;
 import io.github.mayunfei.rxdownload.function.ServiceHelper;
+import io.reactivex.FlowableEmitter;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.functions.Consumer;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.io.OutputStream;
 import java.net.SocketException;
 import java.util.concurrent.Semaphore;
+import okhttp3.ResponseBody;
+import retrofit2.Response;
 
 import static io.github.mayunfei.rxdownload.function.Utils.log;
 
@@ -51,4 +61,6 @@ public class RxDownload {
       }
     });
   }
+
+
 }
