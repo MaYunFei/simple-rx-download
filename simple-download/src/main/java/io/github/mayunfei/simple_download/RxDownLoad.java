@@ -7,6 +7,7 @@ import io.github.mayunfei.simple_download.db.DownloadDao;
 import io.github.mayunfei.simple_download.entity.Task;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.SocketException;
@@ -44,7 +45,7 @@ public class RxDownLoad {
     return instance;
   }
 
-  public void init(Context context,Retrofit retrofit) {
+  public void init(Context context, Retrofit retrofit) {
     mDownloadApi = retrofit.create(DownloadApi.class);
     mDao = new DownloadDao(context);
   }
@@ -99,6 +100,7 @@ public class RxDownLoad {
             });
           }
         })
+        .onBackpressureLatest()
         .debounce(1000, TimeUnit.MICROSECONDS)
         .subscribeOn(AndroidSchedulers.mainThread());
   }
@@ -113,20 +115,24 @@ public class RxDownLoad {
       fileName = getFileName(url);
     }
     checkPath(path);
-    Task task = mDao.getTaskByUrl(url);
+    Task task = mDao.getTaskByUrl(url, Task.MAPPER);
     File downloadFile = new File(filePath, fileName);
     RandomAccessFile tempFile = null;
 
     try {
-      tempFile =
-          new RandomAccessFile(downloadFile,"rwd");
+      tempFile = new RandomAccessFile(downloadFile, "rwd");
+      if (task == null) {
+        task = Task.newBuilder().url(url).path(downloadFile.getAbsolutePath()).build();
+      }
+      if (tempFile.length() == 0){
+        task.setCompletedSize(0);
+      }
+      tempFile.seek(task.getCompletedSize());
+      String range = "bytes=" + task.getCompletedSize() + "-";
 
-      Task task = Task.newBuilder().url(url).path(downloadFile.getAbsolutePath()).build();
-
-    } catch (FileNotFoundException e) {
+    } catch (IOException e) {
       e.printStackTrace();
     }
-
   }
 
   private void checkPath(String path) {

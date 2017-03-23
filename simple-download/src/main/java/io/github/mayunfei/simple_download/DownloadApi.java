@@ -21,6 +21,6 @@ public interface DownloadApi {
   /**
    * 断点下载
    */
-  @GET Observable<Response<ResponseBody>> downloadRxjva(@Header("Range") String range,
+  @GET Observable<Response<ResponseBody>> Rxdownload(@Header("Range") String range,
       @Url String url);
 }
