@@ -1,5 +1,6 @@
 package io.github.mayunfei.rxdownload.entity;
 
+import io.github.mayunfei.rxdownload.db.DownloadDao;
 import io.github.mayunfei.rxdownload.function.DownloadApi;
 import io.reactivex.processors.FlowableProcessor;
 import java.util.Map;
@@ -29,5 +30,7 @@ public abstract class DownloadTask {
 
   public abstract void start(final Semaphore semaphore) throws InterruptedException;
 
-  protected abstract String getUrl();
+  protected abstract String getKey();
+
+  public abstract void insertOrUpdateDownloadTask(DownloadDao dao);
 }

@@ -5,8 +5,10 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import io.github.mayunfei.rxdownload.db.DownloadDao;
+import io.github.mayunfei.rxdownload.entity.DownloadBean;
 import io.github.mayunfei.rxdownload.entity.DownloadEvent;
 import io.github.mayunfei.rxdownload.entity.DownloadTask;
+import io.github.mayunfei.rxdownload.entity.SingleTask;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
@@ -105,8 +107,12 @@ public class DownloadService extends Service {
     }
   }
 
+  public void addDonloadTask(DownloadBean downloadBean) throws InterruptedException {
+    addDownloadTask(new SingleTask(downloadBean));
+  }
+
   public void addDownloadTask(DownloadTask downloadTask) throws InterruptedException {
-    downloadTask.init(taskMap,processorMap);
+    downloadTask.init(taskMap, processorMap);
     downloadQueue.put(downloadTask);
   }
 }

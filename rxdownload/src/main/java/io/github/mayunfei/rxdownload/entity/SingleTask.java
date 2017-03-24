@@ -1,5 +1,6 @@
 package io.github.mayunfei.rxdownload.entity;
 
+import io.github.mayunfei.rxdownload.db.DownloadDao;
 import io.github.mayunfei.rxdownload.function.IOUtils;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -7,7 +8,6 @@ import io.reactivex.FlowableEmitter;
 import io.reactivex.FlowableOnSubscribe;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Action;
-import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.processors.FlowableProcessor;
 import java.io.File;
@@ -30,20 +30,25 @@ import static io.github.mayunfei.rxdownload.function.RxUtils.createProcessor;
 public class SingleTask extends DownloadTask {
 
   private DownloadBean bean;
+  private String multiKey;
+
+  public SingleTask(DownloadBean bean) {
+    this.bean = bean;
+  }
 
   @Override public void init(Map<String, DownloadTask> taskMapMap,
       Map<String, FlowableProcessor<DownloadEvent>> processorMap) {
-    DownloadTask task = taskMapMap.get(getUrl());
+    DownloadTask task = taskMapMap.get(getKey());
     if (task == null) {
-      taskMapMap.put(getUrl(), this);
+      taskMapMap.put(getKey(), this);
     } else {
       if (task.isCanceled()) {
-        taskMapMap.put(getUrl(), this);
+        taskMapMap.put(getKey(), this);
       } else {
-        throw new IllegalArgumentException("下载已经存在" + getUrl());
+        throw new IllegalArgumentException("下载已经存在" + getKey());
       }
     }
-    this.processor = createProcessor(getUrl(), processorMap);
+    this.processor = createProcessor(getKey(), processorMap);
   }
 
   @Override public void start(final Semaphore semaphore) throws InterruptedException {
@@ -69,15 +74,21 @@ public class SingleTask extends DownloadTask {
         return Flowable.create(new FlowableOnSubscribe<DownloadStatus>() {
           @Override public void subscribe(FlowableEmitter<DownloadStatus> emitter)
               throws Exception {
-            saveFile(emitter, new File(""), response);
+            saveFile(emitter, new File(bean.getSavePath(), bean.getSaveName()), response);
           }
         }, BackpressureStrategy.LATEST);
       }
     });
   }
 
-  @Override protected String getUrl() {
-    return null;
+  @Override protected String getKey() {
+    return bean.getUrl();
+  }
+
+  @Override public void insertOrUpdateDownloadTask(DownloadDao dao) {
+      if (dao.existsSingleTask(getKey())){
+        dao.insert(bean,DownloadFlag.WAITING,multiKey);
+      }
   }
 
   /**

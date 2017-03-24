@@ -1,7 +1,9 @@
 package io.github.mayunfei.rxdownload.db;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import io.github.mayunfei.rxdownload.entity.DownloadBean;
 
 /**
  * Created by mayunfei on 17-3-23.
@@ -62,5 +64,24 @@ public class DownloadDao {
       }
     }
     return db;
+  }
+
+  public boolean existsSingleTask(String key) {
+    Cursor cursor = null;
+    try {
+      cursor = getReadableDatabase().query(DownloadBean.TABLE_NAME,
+          new String[] { DownloadBean.COLUMN_ID }, DownloadBean.COLUMN_URL + "=?",
+          new String[] { key }, null, null, null);
+      cursor.moveToFirst();
+      return cursor.getCount() > 0;
+    } finally {
+      if (cursor != null) {
+        cursor.close();
+      }
+    }
+  }
+
+  public void insert(DownloadBean bean, int flag, String multiKey) {
+
   }
 }
