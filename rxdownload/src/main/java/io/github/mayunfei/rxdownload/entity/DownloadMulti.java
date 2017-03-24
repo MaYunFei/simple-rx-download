@@ -8,6 +8,7 @@ public class DownloadMulti {
   public static final String TABLE_NAME = "download_task";
   public static final String COLUMN_ID = "id";
   public static final String COLUMN_KEY = "key";
+  public static final String COLUMN_TYPE = "type";
   public static final String COLUMN_ARGS0 = "args0";
   public static final String COLUMN_ARGS1 = "args1";
   public static final String COLUMN_ARGS2 = "args2";
@@ -17,6 +18,7 @@ public class DownloadMulti {
   public static final String CREAT_SQL = "CREATE TABLE " + TABLE_NAME + " (" +
       COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
       COLUMN_KEY + " TEXT NOT NULL," +
+      COLUMN_TYPE + " INTEGER, " +
       COLUMN_ARGS0 + " TEXT," +
       COLUMN_ARGS1 + " TEXT," +
       COLUMN_ARGS2 + " TEXT," +
@@ -26,6 +28,7 @@ public class DownloadMulti {
 
   private int id;
   private String key;
+  private int type;
   private String args0;
   private String args1;
   private String args2;

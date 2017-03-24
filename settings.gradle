@@ -1,1 +1,2 @@
-include ':app', ':simple-download', ':rxdownload', ':rxdownload2'
+include ':app', ':simple-download', ':rxdownload', ':rxdownload2', ':rxmultidownload',
+    ':downloadmanager'
