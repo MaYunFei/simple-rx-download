@@ -2,6 +2,7 @@ package io.github.mayunfei.rxdownload.entity;
 
 import io.github.mayunfei.rxdownload.function.DownloadApi;
 import io.reactivex.processors.FlowableProcessor;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -19,10 +20,14 @@ public abstract class DownloadTask {
   private boolean completed = false;
   protected DownloadApi downloadApi;
 
+  public abstract void init(Map<String, DownloadTask> taskMapMap,
+      Map<String, FlowableProcessor<DownloadEvent>> processorMap);
 
   public boolean isCanceled() {
     return canceled;
   }
 
   public abstract void start(final Semaphore semaphore) throws InterruptedException;
+
+  protected abstract String getUrl();
 }

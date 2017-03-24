@@ -9,21 +9,43 @@ import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
+import io.reactivex.processors.FlowableProcessor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import okhttp3.ResponseBody;
 import org.reactivestreams.Publisher;
 import retrofit2.Response;
+
+import static io.github.mayunfei.rxdownload.function.RxUtils.createProcessor;
 
 /**
  * Created by yunfei on 17-3-23.
  */
 
 public class SingleTask extends DownloadTask {
+
+  private DownloadBean bean;
+
+  @Override public void init(Map<String, DownloadTask> taskMapMap,
+      Map<String, FlowableProcessor<DownloadEvent>> processorMap) {
+    DownloadTask task = taskMapMap.get(getUrl());
+    if (task == null) {
+      taskMapMap.put(getUrl(), this);
+    } else {
+      if (task.isCanceled()) {
+        taskMapMap.put(getUrl(), this);
+      } else {
+        throw new IllegalArgumentException("下载已经存在" + getUrl());
+      }
+    }
+    this.processor = createProcessor(getUrl(), processorMap);
+  }
+
   @Override public void start(final Semaphore semaphore) throws InterruptedException {
     if (isCanceled()) {
       return;
@@ -36,23 +58,26 @@ public class SingleTask extends DownloadTask {
       return;
     }
 
-    downloadApi.download(null,"")
-        .doFinally(new Action() {
-          @Override public void run() throws Exception {
-            semaphore.release();
-          }
-        })
-        .flatMap(new Function<Response<ResponseBody>, Publisher<DownloadStatus>>() {
-          @Override public Publisher<DownloadStatus> apply(@NonNull final Response<ResponseBody> response)
+    downloadApi.download(null, "").doFinally(new Action() {
+      @Override public void run() throws Exception {
+        semaphore.release();
+      }
+    }).flatMap(new Function<Response<ResponseBody>, Publisher<DownloadStatus>>() {
+      @Override
+      public Publisher<DownloadStatus> apply(@NonNull final Response<ResponseBody> response)
+          throws Exception {
+        return Flowable.create(new FlowableOnSubscribe<DownloadStatus>() {
+          @Override public void subscribe(FlowableEmitter<DownloadStatus> emitter)
               throws Exception {
-            return Flowable.create(new FlowableOnSubscribe<DownloadStatus>() {
-              @Override public void subscribe(FlowableEmitter<DownloadStatus> emitter)
-                  throws Exception {
-                saveFile(emitter,new File(""),response);
-              }
-            }, BackpressureStrategy.LATEST);
+            saveFile(emitter, new File(""), response);
           }
-        });
+        }, BackpressureStrategy.LATEST);
+      }
+    });
+  }
+
+  @Override protected String getUrl() {
+    return null;
   }
 
   /**

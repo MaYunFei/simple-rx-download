@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import io.github.mayunfei.rxdownload.entity.DownloadStatus;
+import io.github.mayunfei.rxdownload.function.DownloadHelper;
 import io.github.mayunfei.rxdownload.function.DownloadService;
 import io.github.mayunfei.rxdownload.function.IOUtils;
 import io.github.mayunfei.rxdownload.function.ServiceHelper;
@@ -27,6 +28,7 @@ import java.net.SocketException;
 import java.util.concurrent.Semaphore;
 import okhttp3.ResponseBody;
 import retrofit2.Response;
+import retrofit2.Retrofit;
 
 import static io.github.mayunfei.rxdownload.function.Utils.log;
 
@@ -40,12 +42,24 @@ public class RxDownload {
 
   private final Context context;
   private ServiceHelper serviceHelper;
-
   private DownloadService downloadService;
+  private DownloadHelper downloadHelper;
 
   private RxDownload(Context context) {
     this.context = context.getApplicationContext();
     serviceHelper = new ServiceHelper(context);
+    downloadHelper = new DownloadHelper();
+  }
+
+  public static RxDownload getInstance(Context context) {
+    if (instance == null) {
+      synchronized (RxDownload.class) {
+        if (instance == null) {
+          instance = new RxDownload(context);
+        }
+      }
+    }
+    return instance;
   }
 
   static {
@@ -61,6 +75,4 @@ public class RxDownload {
       }
     });
   }
-
-
 }

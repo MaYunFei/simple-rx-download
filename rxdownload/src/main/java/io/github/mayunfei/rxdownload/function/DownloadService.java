@@ -4,6 +4,8 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+import io.github.mayunfei.rxdownload.db.DownloadDao;
+import io.github.mayunfei.rxdownload.entity.DownloadEvent;
 import io.github.mayunfei.rxdownload.entity.DownloadTask;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
@@ -11,8 +13,13 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.processors.BehaviorProcessor;
+import io.reactivex.processors.FlowableProcessor;
 import io.reactivex.schedulers.Schedulers;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 
@@ -24,9 +31,18 @@ public class DownloadService extends Service {
   private DownloadBinder mBinder;
 
   private BlockingQueue<DownloadTask> downloadQueue;
+  /**
+   * 当前任务列表
+   */
+  private Map<String, DownloadTask> taskMap;
+  /**
+   * 用于监听的列表
+   */
+  private Map<String, FlowableProcessor<DownloadEvent>> processorMap;
 
   //信号量控制线程个数
   private Semaphore semaphore;
+  private DownloadDao dao;
 
   public DownloadService() {
   }
@@ -34,7 +50,9 @@ public class DownloadService extends Service {
   @Override public void onCreate() {
     super.onCreate();
     mBinder = new DownloadBinder();
+    dao = DownloadDao.getSingleton(this);
     downloadQueue = new LinkedBlockingQueue<>();
+    processorMap = new ConcurrentHashMap<>();
   }
 
   @Override public int onStartCommand(Intent intent, int flags, int startId) {
@@ -85,5 +103,10 @@ public class DownloadService extends Service {
     public DownloadService getService() {
       return DownloadService.this;
     }
+  }
+
+  public void addDownloadTask(DownloadTask downloadTask) throws InterruptedException {
+    downloadTask.init(taskMap,processorMap);
+    downloadQueue.put(downloadTask);
   }
 }
